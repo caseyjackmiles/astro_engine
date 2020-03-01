@@ -16,6 +16,9 @@ module SunriseSunset
     attribution
   ]
 
+  # Public: Class for unsuccessful REST API calls.
+  APIError = Class.new(StandardError)
+
   # Public: Class for making SunriseSunset REST API calls.
   class Client
     # Public: Send a request to SunriseSunset API.
@@ -32,16 +35,17 @@ module SunriseSunset
     #
     # Returns OpenStruct instance if HTTP request was successful.
     #  See SunriseSunset::RESPONSE_RESULTS for field names.
+    # Raises SunriseSunset::APIError if HTTP request was not successful.
     def self.get_sunrise_sunset(latitude:, longitude:, date: nil, formatted: nil)
       uri = URI(BASE_URI)
       params = { lat: latitude, lng: longitude, date: date, formatted: formatted }.compact
       uri.query = URI.encode_www_form(params)
 
       response = Net::HTTP.get_response(uri)
-      if response.is_a? Net::HTTPSuccess
-        response_body = JSON.parse response.body
-        OpenStruct.new response_body['results'].merge(attribution: ATTRIBUTION_LINK)
-      end
+      raise APIError unless response.is_a? Net:HTTPSuccess
+
+      response_body = JSON.parse response.body
+      OpenStruct.new response_body['results'].merge(attribution: ATTRIBUTION_LINK)
     end
   end
 end
